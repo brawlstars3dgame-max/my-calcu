@@ -2,16 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>TG Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TG Calc</title>
     <script src="https://telegram.org"></script>
     <style>
         :root {
             --bg-color: #000000;
-            --btn-gray: #333333;
-            --btn-lightgray: #a5a5a5;
-            --btn-orange: #ff9f0a;
-            --text-white: #ffffff;
+            --btn-num: #333333;
+            --btn-op: #ff9f0a;
+            --btn-sp: #a5a5a5;
         }
 
         body {
@@ -19,167 +18,168 @@
             background-color: var(--bg-color);
             color: white;
             margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: flex-end; /* Калькулятор внизу, как на мобильных */
+            flex-direction: column;
+            justify-content: flex-end; /* Все кнопки прижаты к низу */
             height: 100vh;
             overflow: hidden;
-            user-select: none;
-        }
-
-        .calculator {
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
         }
 
         #display {
-            font-size: 5rem;
+            padding: 20px;
             text-align: right;
-            margin-bottom: 10px;
-            padding: 0 10px;
-            overflow: hidden;
-            white-space: nowrap;
+            font-size: 3.5rem; /* Немного уменьшил шрифт, чтобы не вылезал */
+            font-weight: 300;
+            word-wrap: break-word;
+            max-height: 20vh;
         }
 
-        .buttons {
+        .buttons-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
+            gap: 10px; /* Отступы между кнопками */
+            padding: 15px;
+            padding-bottom: 30px; /* Отступ от нижнего края экрана */
         }
 
         button {
             border: none;
-            border-radius: 50%;
-            aspect-ratio: 1;
-            font-size: 2rem;
-            font-weight: 400;
+            border-radius: 50px; /* Скругленные кнопки */
+            height: 70px; /* Фиксированная высота для стабильности */
+            font-size: 1.5rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: brightness 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: opacity 0.2s;
         }
 
-        button:active { filter: brightness(1.5); }
+        button:active { opacity: 0.5; }
 
-        .num { background-color: var(--btn-gray); color: white; }
-        .op { background-color: var(--btn-orange); color: white; font-size: 2.5rem; }
-        .sp { background-color: var(--btn-lightgray); color: black; }
-        
-        .zero { 
-            grid-column: span 2; 
-            aspect-ratio: initial; 
-            border-radius: 50px; 
-            text-align: left; 
-            padding-left: 35px; 
+        .n { background-color: var(--btn-num); } /* Цифры */
+        .o { background-color: var(--btn-op); font-size: 2rem; } /* Операции */
+        .s { background-color: var(--btn-sp); color: black; } /* Спец кнопки */
+
+        .zero { grid-column: span 2; justify-content: flex-start; padding-left: 25px; }
+
+        /* Для совсем маленьких экранов */
+        @media (max-height: 600px) {
+            button { height: 55px; font-size: 1.2rem; }
+            #display { font-size: 2.5rem; }
         }
     </style>
 </head>
 <body>
 
-<div class="calculator">
     <div id="display">0</div>
-    <div class="buttons">
-        <button class="sp" onclick="clearAll()">AC</button>
-        <button class="sp" onclick="toggleSign()">+/-</button>
-        <button class="sp" onclick="percent()">%</button>
-        <button class="op" onclick="setOp('/')">÷</button>
-        
-        <button class="num" onclick="addNum('7')">7</button>
-        <button class="num" onclick="addNum('8')">8</button>
-        <button class="num" onclick="addNum('9')">9</button>
-        <button class="op" onclick="setOp('*')">×</button>
-        
-        <button class="num" onclick="addNum('4')">4</button>
-        <button class="num" onclick="addNum('5')">5</button>
-        <button class="num" onclick="addNum('6')">6</button>
-        <button class="op" onclick="setOp('-')">-</button>
-        
-        <button class="num" onclick="addNum('1')">1</button>
-        <button class="num" onclick="addNum('2')">2</button>
-        <button class="num" onclick="addNum('3')">3</button>
-        <button class="op" onclick="setOp('+')">+</button>
-        
-        <button class="num zero" onclick="addNum('0')">0</button>
-        <button class="num" onclick="addNum('.')">,</button>
-        <button class="op" onclick="calc()">=</button>
+
+    <div class="buttons-grid">
+        <button class="s" onclick="allClear()">AC</button>
+        <button class="s" onclick="invert()">+/-</button>
+        <button class="s" onclick="percent()">%</button>
+        <button class="o" onclick="handleOp('/')">÷</button>
+
+        <button class="n" onclick="inputDigit('7')">7</button>
+        <button class="n" onclick="inputDigit('8')">8</button>
+        <button class="n" onclick="inputDigit('9')">9</button>
+        <button class="o" onclick="handleOp('*')">×</button>
+
+        <button class="n" onclick="inputDigit('4')">4</button>
+        <button class="n" onclick="inputDigit('5')">5</button>
+        <button class="n" onclick="inputDigit('6')">6</button>
+        <button class="o" onclick="handleOp('-')">−</button>
+
+        <button class="n" onclick="inputDigit('1')">1</button>
+        <button class="n" onclick="inputDigit('2')">2</button>
+        <button class="n" onclick="inputDigit('3')">3</button>
+        <button class="o" onclick="handleOp('+')">+</button>
+
+        <button class="n zero" onclick="inputDigit('0')">0</button>
+        <button class="n" onclick="inputDigit('.')">,</button>
+        <button class="o" onclick="calculate()">=</button>
     </div>
-</div>
 
 <script>
     const tg = window.Telegram.WebApp;
-    tg.expand();
+    tg.expand(); 
     tg.ready();
 
-    let displayValue = '0';
-    let firstOperand = null;
-    let operator = null;
-    let waitingForSecondOperand = false;
-
-    const display = document.querySelector('#display');
-
-    function updateDisplay() {
-        display.innerText = displayValue.substring(0, 7); // Ограничим длину
-    }
-
-    function addNum(num) {
-        if (waitingForSecondOperand) {
-            displayValue = num;
-            waitingForSecondOperand = false;
-        } else {
-            displayValue = displayValue === '0' ? num : displayValue + num;
-        }
-        updateDisplay();
-    }
-
-    function setOp(nextOp) {
-        const value = parseFloat(displayValue);
-        if (operator && waitingForSecondOperand) {
-            operator = nextOp;
-            return;
-        }
-        if (firstOperand === null) {
-            firstOperand = value;
-        } else if (operator) {
-            const result = performCalc[operator](firstOperand, value);
-            displayValue = String(result);
-            firstOperand = result;
-        }
-        waitingForSecondOperand = true;
-        operator = nextOp;
-        updateDisplay();
-    }
-
-    const performCalc = {
-        '/': (first, second) => first / second,
-        '*': (first, second) => first * second,
-        '+': (first, second) => first + second,
-        '-': (first, second) => first - second,
+    let state = {
+        displayValue: '0',
+        firstOperand: null,
+        operator: null,
+        waitingForSecond: false
     };
 
-    function calc() {
-        if (operator === null || waitingForSecondOperand) return;
-        const value = parseFloat(displayValue);
-        displayValue = String(performCalc[operator](firstOperand, value));
-        firstOperand = null;
-        operator = null;
-        waitingForSecondOperand = false;
+    function updateDisplay() {
+        const display = document.getElementById('display');
+        display.innerText = state.displayValue.slice(0, 9); // Защита от слишком длинных чисел
+    }
+
+    function inputDigit(digit) {
+        if (state.waitingForSecond) {
+            state.displayValue = digit;
+            state.waitingForSecond = false;
+        } else {
+            state.displayValue = state.displayValue === '0' ? digit : state.displayValue + digit;
+        }
         updateDisplay();
     }
 
-    function clearAll() {
-        displayValue = '0';
-        firstOperand = null;
-        operator = null;
-        waitingForSecondOperand = false;
+    function handleOp(nextOp) {
+        const val = parseFloat(state.displayValue);
+
+        if (state.operator && state.waitingForSecond) {
+            state.operator = nextOp;
+            return;
+        }
+
+        if (state.firstOperand === null) {
+            state.firstOperand = val;
+        } else if (state.operator) {
+            const result = perform(state.firstOperand, val, state.operator);
+            state.displayValue = String(result);
+            state.firstOperand = result;
+        }
+
+        state.waitingForSecond = true;
+        state.operator = nextOp;
         updateDisplay();
     }
 
-    function toggleSign() {
-        displayValue = String(parseFloat(displayValue) * -1);
+    function perform(first, second, op) {
+        if (op === '+') return first + second;
+        if (op === '-') return first - second;
+        if (op === '*') return first * second;
+        if (op === '/') return first / second;
+        return second;
+    }
+
+    function calculate() {
+        if (state.operator === null || state.waitingForSecond) return;
+        const val = parseFloat(state.displayValue);
+        state.displayValue = String(perform(state.firstOperand, val, state.operator));
+        state.firstOperand = null;
+        state.operator = null;
+        state.waitingForSecond = false;
+        updateDisplay();
+    }
+
+    function allClear() {
+        state = { displayValue: '0', firstOperand: null, operator: null, waitingForSecond: false };
+        updateDisplay();
+    }
+
+    function invert() {
+        state.displayValue = String(parseFloat(state.displayValue) * -1);
         updateDisplay();
     }
 
     function percent() {
-        displayValue = String(parseFloat(displayValue) / 100);
+        state.displayValue = String(parseFloat(state.displayValue) / 100);
         updateDisplay();
     }
 </script>
